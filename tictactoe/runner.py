@@ -18,6 +18,7 @@ largeFont = pygame.font.Font("OpenSans-Regular.ttf", 40)
 moveFont = pygame.font.Font("OpenSans-Regular.ttf", 60)
 
 user = None
+mode = None
 board = ttt.initial_state()
 ai_turn = False
 
@@ -39,19 +40,26 @@ while True:
         screen.blit(title, titleRect)
 
         # Draw buttons
-        playXButton = pygame.Rect((width / 8), (height / 2), width / 4, 50)
-        playX = mediumFont.render("Play as X", True, black)
+        playXButton = pygame.Rect((width / 8) + 30, (height / 2) - 70, width / 2, 50)
+        playX = mediumFont.render("Play as X vs AI", True, black)
         playXRect = playX.get_rect()
         playXRect.center = playXButton.center
         pygame.draw.rect(screen, white, playXButton)
         screen.blit(playX, playXRect)
 
-        playOButton = pygame.Rect(5 * (width / 8), (height / 2), width / 4, 50)
-        playO = mediumFont.render("Play as O", True, black)
+        playOButton = pygame.Rect((width / 8) + 30, (height / 2), width / 2, 50)
+        playO = mediumFont.render("Play as O vs AI", True, black)
         playORect = playO.get_rect()
         playORect.center = playOButton.center
         pygame.draw.rect(screen, white, playOButton)
         screen.blit(playO, playORect)
+
+        pvpButton = pygame.Rect((width / 8) + 30, (height / 2) + 70, width / 2, 50)
+        pvpText = mediumFont.render("Play vs Player", True, black)
+        pvpRect = pvpText.get_rect()
+        pvpRect.center = pvpButton.center
+        pygame.draw.rect(screen, white, pvpButton)
+        screen.blit(pvpText, pvpRect)
 
         # Check if button is clicked
         click, _, _ = pygame.mouse.get_pressed()
@@ -59,10 +67,16 @@ while True:
             mouse = pygame.mouse.get_pos()
             if playXButton.collidepoint(mouse):
                 time.sleep(0.2)
+                mode = "vai"
                 user = ttt.X
             elif playOButton.collidepoint(mouse):
                 time.sleep(0.2)
+                mode = "vai"
                 user = ttt.O
+            elif pvpButton.collidepoint(mouse):
+                time.sleep(0.2)
+                mode = "pvp"
+                user = ttt.X
 
     else:
 
@@ -92,6 +106,9 @@ while True:
         game_over = ttt.terminal(board)
         player = ttt.player(board)
 
+        # determine if it is AI turn to move
+        ai_turn_now = (mode == "vai" and user != player and not game_over)
+
         # Show title
         if game_over:
             winner = ttt.winner(board)
@@ -99,17 +116,19 @@ while True:
                 title = f"Game Over: Tie."
             else:
                 title = f"Game Over: {winner} wins."
-        elif user == player:
-            title = f"Play as {user}"
+        elif mode == "pvp":
+            title = f"{player}'s turn"
+        elif ai_turn_now:
+            title = "Computer thinking..."
         else:
-            title = f"Computer thinking..."
+            title = f"Play as {user}"
         title = largeFont.render(title, True, white)
         titleRect = title.get_rect()
         titleRect.center = ((width / 2), 30)
         screen.blit(title, titleRect)
 
         # Check for AI move
-        if user != player and not game_over:
+        if ai_turn_now:
             if ai_turn:
                 time.sleep(0.5)
                 move = ttt.minimax(board)
@@ -120,7 +139,7 @@ while True:
 
         # Check for a user move
         click, _, _ = pygame.mouse.get_pressed()
-        if click == 1 and user == player and not game_over:
+        if click == 1 and not game_over and not ai_turn_now:
             mouse = pygame.mouse.get_pos()
             for i in range(3):
                 for j in range(3):
@@ -140,6 +159,7 @@ while True:
                 if againButton.collidepoint(mouse):
                     time.sleep(0.2)
                     user = None
+                    mode = None
                     board = ttt.initial_state()
                     ai_turn = False
 
